@@ -2,8 +2,8 @@
 "use server";
 
 import { createAuthSession } from "@/lib/auth";
-import { hashUserPassword } from "@/lib/hash";
-import { createUser } from "@/lib/user";
+import { hashUserPassword, verifyPassword } from "@/lib/hash";
+import { createUser, getUserByEmail } from "@/lib/user";
 import { redirect } from "next/navigation";
 
 export async function signup(prevState, formData) {
@@ -55,4 +55,31 @@ export async function signup(prevState, formData) {
    - 비밀번호는 반드시 ✨해시(hash)처리✨ 후 저장해야 함
    - 해시된 문자열은 원래 비밀번호로 복구할 수 없어 보안성 증가
   */
+}
+
+export async function login(prevState, formState) {
+  const email = formState.get("email");
+  const password = formState.get("password");
+
+  const existingUser = getUserByEmail(email);
+
+  if (!existingUser) {
+    return {
+      errors: {
+        email: "Could not authenticate user, please check your credentials.",
+      },
+    };
+  }
+
+  const isValidPassword = verifyPassword(existingUser.password, password);
+  if (!isValidPassword) {
+    return {
+      errors: {
+        email: "Could not authenticate user, please check your credentials.",
+      },
+    };
+  }
+
+  await createAuthSession(existingUser.id);
+  redirect("/training");
 }
