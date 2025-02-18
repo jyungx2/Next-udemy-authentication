@@ -1,6 +1,7 @@
 // server action
 "use server";
 
+import { createAuthSession } from "@/lib/auth";
 import { hashUserPassword } from "@/lib/hash";
 import { createUser } from "@/lib/user";
 import { redirect } from "next/navigation";
@@ -28,7 +29,9 @@ export async function signup(prevState, formData) {
   const hashedPassword = hashUserPassword(password); // 보안 문제로 hash 처리 필수!
 
   try {
-    createUser(email, hashedPassword);
+    const id = createUser(email, hashedPassword);
+    await createAuthSession(id);
+    redirect("/training");
   } catch (err) {
     if (err.code === "SQLITE_CONSTRAINT_UNIQUE") {
       return {
@@ -40,7 +43,6 @@ export async function signup(prevState, formData) {
     }
     throw err;
   }
-  redirect("/training");
 
   /*
   2. 보안 문제점 지적
