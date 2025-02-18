@@ -1,6 +1,8 @@
 // server action
 "use server";
 
+import { hashUserPassword } from "@/lib/hash";
+
 export async function signup(prevState, formData) {
   const email = formData.get("email");
   const password = formData.get("password");
@@ -21,7 +23,8 @@ export async function signup(prevState, formData) {
   }
 
   // ⭐️ Store it in the database (create a new user)
-  createUser(email, password);
+  const hashedPassword = hashUserPassword(password); // 보안 문제로 hash 처리 필수!
+  createUser(email, hashedPassword);
   /*
   2. 보안 문제점 지적
    - 현재 방식은 비밀번호가 평문으로 저장되는 💥심각한 보안 취약점💥이 있음
