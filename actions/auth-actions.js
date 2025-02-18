@@ -2,6 +2,8 @@
 "use server";
 
 import { hashUserPassword } from "@/lib/hash";
+import { createUser } from "@/lib/user";
+import { redirect } from "next/navigation";
 
 export async function signup(prevState, formData) {
   const email = formData.get("email");
@@ -24,7 +26,22 @@ export async function signup(prevState, formData) {
 
   // ⭐️ Store it in the database (create a new user)
   const hashedPassword = hashUserPassword(password); // 보안 문제로 hash 처리 필수!
-  createUser(email, hashedPassword);
+
+  try {
+    createUser(email, hashedPassword);
+  } catch (err) {
+    if (err.code === "SQLITE_CONSTRAINT_UNIQUE") {
+      return {
+        errors: {
+          email:
+            "It seems like an account for the chosen email already exists.",
+        },
+      };
+    }
+    throw err;
+  }
+  redirect("/training");
+
   /*
   2. 보안 문제점 지적
    - 현재 방식은 비밀번호가 평문으로 저장되는 💥심각한 보안 취약점💥이 있음
